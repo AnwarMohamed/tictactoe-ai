@@ -26,7 +26,7 @@ public class GameFrame extends javax.swing.JFrame {
     private final JRadioButtonMenuItem mediumAction; 
     private final JRadioButtonMenuItem hardAction;
     
-    private final JMenuItem restartAction;
+//    private final JMenuItem restartAction;
     
     /**
      * Creates new form GameFrame
@@ -38,20 +38,20 @@ public class GameFrame extends javax.swing.JFrame {
         setJMenuBar(menuBar);
 
         JMenu gameMenu = new JMenu("Game");        
-        restartAction = new JMenuItem("Restart Game");
+//        restartAction = new JMenuItem("Restart Game");
         JMenuItem exitAction = new JMenuItem("Exit");
                 
-        gameMenu.add(restartAction);
+//        gameMenu.add(restartAction);
         gameMenu.add(new JSeparator());
         gameMenu.add(exitAction);
         
-        restartAction.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent action) {
-                mGameController.restart();
-                restart();
-            }
-        });        
+//        restartAction.addActionListener(new ActionListener() {
+//            @Override
+//            public void actionPerformed(ActionEvent action) {
+//                mGameController.restart();
+//                restart();
+//            }
+//        });        
         
         exitAction.addActionListener(new ActionListener() {
             @Override
@@ -272,8 +272,9 @@ public class GameFrame extends javax.swing.JFrame {
                     "You Won",
                     JOptionPane.INFORMATION_MESSAGE);  
                 
-                mGameController.restart();
-                restart();                
+                //mGameController.restart();
+                //restart();                
+                System.exit(0);
             }
         });
     }
@@ -287,8 +288,9 @@ public class GameFrame extends javax.swing.JFrame {
                     "You Lost",
                     JOptionPane.INFORMATION_MESSAGE);  
                 
-                mGameController.restart();
-                restart();
+                //mGameController.restart();
+                //restart();
+                System.exit(0);
             }
         });
     }
@@ -302,8 +304,9 @@ public class GameFrame extends javax.swing.JFrame {
                     "It's a Draw",
                     JOptionPane.INFORMATION_MESSAGE); 
                 
-                mGameController.restart();
-                restart();                
+                //mGameController.restart();
+                //restart();                
+                System.exit(0);
             }
         });
     }
@@ -312,10 +315,10 @@ public class GameFrame extends javax.swing.JFrame {
     private final static ImageIcon ICON_STATE_X;
     
     static {        
-        ICON_STATE_O = new ImageIcon(new ImageIcon("circle.png")
+        ICON_STATE_O = new ImageIcon(new ImageIcon("res/circle.png")
                 .getImage().getScaledInstance(80, 80, Image.SCALE_DEFAULT));
                 
-        ICON_STATE_X = new ImageIcon(new ImageIcon("cross.png")
+        ICON_STATE_X = new ImageIcon(new ImageIcon("res/cross.png")
                 .getImage().getScaledInstance(80, 80, Image.SCALE_DEFAULT));        
     }
     
