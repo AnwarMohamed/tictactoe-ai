@@ -6,6 +6,7 @@ import javax.swing.ButtonGroup;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
+import javax.swing.JOptionPane;
 import javax.swing.JRadioButtonMenuItem;
 import javax.swing.JSeparator;
 
@@ -241,6 +242,33 @@ public class GameFrame extends javax.swing.JFrame {
         easyAction.addActionListener(listener);
         mediumAction.addActionListener(listener);
         hardAction.addActionListener(listener);
+    }
+    
+    public void notifyWin() {
+        JOptionPane.showMessageDialog(this,
+            "Congratulations, You Won!",
+            "You Won",
+            JOptionPane.INFORMATION_MESSAGE);
+        
+        restartAction.doClick();
+    }
+
+    public void notifyLoss() {
+        JOptionPane.showMessageDialog(this,
+            "Unfortunately, You Lost!",
+            "You Lost",
+            JOptionPane.INFORMATION_MESSAGE);
+        
+        restartAction.doClick();
+    }
+    
+    public void notifyDraw() {
+        JOptionPane.showMessageDialog(this,
+            "Lol, It's a Draw!",
+            "It's a Draw",
+            JOptionPane.INFORMATION_MESSAGE);
+        
+        restartAction.doClick();        
     }
     
     public javax.swing.JToggleButton[] getButtons() {

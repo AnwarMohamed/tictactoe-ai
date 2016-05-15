@@ -17,6 +17,8 @@ public class GameController {
     private final ActionListener mLevelListener;
     private final ActionListener mRestartListener;
     
+    private final GameFrame mGameFrame;
+    
     private static final int PLAY_STATE_DEFAULT = 0;
     private static final int PLAY_STATE_O = -1;
     private static final int PLAY_STATE_X = 1;
@@ -43,14 +45,22 @@ public class GameController {
                 String buttonLocation = button.getToolTipText();
                 
                 mPlays[Integer.parseInt(buttonLocation.split(":")[0]) * 3
-                        + Integer.parseInt(buttonLocation.split(":")[1])] = TURN_STATE_O;
+                        + Integer.parseInt(buttonLocation.split(":")[1])] = PLAY_STATE_O;
                 
                 button.setEnabled(false);
                 button.setIcon(ICON_STATE_O);
                 
                 mTurn = TURN_STATE_X;
                 
-                play();
+                if (hasWinner(PLAY_STATE_X)) {
+                    mGameFrame.notifyLoss();
+                } else if (hasWinner(PLAY_STATE_O)) {
+                    mGameFrame.notifyWin();
+                } else if (isFinished()) {
+                    mGameFrame.notifyDraw();
+                } else {                
+                    play();
+                }
             }
         };
         
@@ -84,6 +94,8 @@ public class GameController {
         ICON_STATE_X = new ImageIcon("cross.png");        
         ICON_STATE_X = new ImageIcon(
                 ICON_STATE_X.getImage().getScaledInstance(80, 80, Image.SCALE_DEFAULT));
+        
+        mGameFrame = gameFrame;
     }
     
     private void restart() {
@@ -93,7 +105,7 @@ public class GameController {
             button.setIcon(null);
         }
         
-        for (int i=9; i<mPlays.length; i++) {
+        for (int i=0; i<mPlays.length; i++) {
             mPlays[i] = PLAY_STATE_DEFAULT;
         }
         
@@ -104,5 +116,48 @@ public class GameController {
         
         
         mTurn = TURN_STATE_X;
-    }        
+        
+        
+        if (hasWinner(PLAY_STATE_X)) {
+            mGameFrame.notifyLoss();
+        } else if (hasWinner(PLAY_STATE_O)) {
+            mGameFrame.notifyWin();
+        } else if (isFinished()) {
+            mGameFrame.notifyDraw();
+        }
+    }    
+    
+    private boolean isFinished() {
+        for (int play: mPlays) {
+            if (play == PLAY_STATE_DEFAULT) {
+                return false;
+            }
+        }        
+        return true;
+    }
+    
+    private boolean hasWinner(int player) {
+        if ((mPlays[0] == mPlays[4] 
+                && mPlays[4] == mPlays[8] 
+                && mPlays[8] == player) 
+                || 
+                (mPlays[2] == mPlays[4] 
+                && mPlays[4] == mPlays[6] 
+                && mPlays[6] == player)) {            
+            return true;
+        }
+        
+        for (int i = 0; i < 3; i++) {
+            if ((mPlays[i] == mPlays[3+i] 
+                    && mPlays[3+i] == mPlays[6+i] 
+                    && mPlays[6+i] == player) 
+                   || 
+                    (mPlays[3*(2-i)] == mPlays[3*(2-i)+1] 
+                    && mPlays[3*(2-i)+1] == mPlays[3*(2-i)+2] 
+                    && mPlays[3*(2-i)+2] == player)) {            
+               return true;
+            }
+        }
+        return false;
+    }    
 }
