@@ -1,8 +1,12 @@
 package tictactoe;
 
+import java.awt.Image;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.ArrayList;
+import java.util.List;
 import javax.swing.ButtonGroup;
+import javax.swing.ImageIcon;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
@@ -304,12 +308,48 @@ public class GameFrame extends javax.swing.JFrame {
         });
     }
     
-    public javax.swing.JToggleButton[] getButtons() {
-        return new javax.swing.JToggleButton[]{
-            button0_0, button0_1, button0_2 ,
-            button1_0, button1_1, button1_2 ,
-            button2_0, button2_1, button2_2 
-        };        
+    private final static ImageIcon ICON_STATE_O;
+    private final static ImageIcon ICON_STATE_X;
+    
+    static {        
+        ICON_STATE_O = new ImageIcon(new ImageIcon("circle.png")
+                .getImage().getScaledInstance(80, 80, Image.SCALE_DEFAULT));
+                
+        ICON_STATE_X = new ImageIcon(new ImageIcon("cross.png")
+                .getImage().getScaledInstance(80, 80, Image.SCALE_DEFAULT));        
+    }
+    
+    public void updateButtons(int[] plays) {
+        List<JToggleButton> buttons = getButtons();       
+        for (int i=0; i<plays.length; i++) {
+            if (plays[i] == 0) {
+                buttons.get(i).setEnabled(true);
+                buttons.get(i).setSelected(false);
+                buttons.get(i).setIcon(null);                
+            } else if (plays[i] == 1) {                
+                buttons.get(i).setSelected(true);
+                buttons.get(i).setIcon(ICON_STATE_X);
+                buttons.get(i).setEnabled(false);                
+            } else if (plays[i] == -1) {                
+                buttons.get(i).setSelected(true);
+                buttons.get(i).setIcon(ICON_STATE_O);
+                buttons.get(i).setEnabled(false);
+            }
+        }        
+    }
+    
+    public List<JToggleButton> getButtons() {
+        List<JToggleButton> buttons = new ArrayList<JToggleButton>();        
+        buttons.add(button0_0);
+        buttons.add(button0_1);
+        buttons.add(button0_2);
+        buttons.add(button1_0);
+        buttons.add(button1_1);
+        buttons.add(button1_2);
+        buttons.add(button2_0);
+        buttons.add(button2_1);
+        buttons.add(button2_2);                        
+        return buttons;
     }
     
     // Variables declaration - do not modify//GEN-BEGIN:variables
