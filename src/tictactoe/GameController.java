@@ -3,10 +3,8 @@ package tictactoe;
 import java.awt.Image;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map.Entry;
 import javax.swing.ImageIcon;
 import javax.swing.JToggleButton;
 
@@ -14,8 +12,7 @@ public class GameController {
         
     private final JToggleButton[] mMoveButtons;
     private final ActionListener mMoveListener;
-    private final ActionListener mLevelListener;
-    private final ActionListener mRestartListener;
+    private final ActionListener mLevelListener;    
     
     private final GameFrame mGameFrame;
     
@@ -24,20 +21,27 @@ public class GameController {
     private static final int PLAY_STATE_X = 1;
     
     private static final int TURN_STATE_X = 1;
-    private static final int TURN_STATE_O = -1;
+    private static final int TURN_STATE_O = 2;
     
     private static final int LEVEL_STATE_EASY = 0;
     private static final int LEVEL_STATE_MEDIUM = 1;
     private static final int LEVEL_STATE_HARD = 2;
     
-    private int mLevel = LEVEL_STATE_EASY;
-    private int mTurn = TURN_STATE_O;
+    private int mLevel = LEVEL_STATE_EASY;    
     private final int[] mPlays = new int[9];
-    private int mDepthLimit = 5;
-    private final List<Entry<Integer, Integer>> mChildrenScore;
     
-    private static ImageIcon ICON_STATE_O;
-    private static ImageIcon ICON_STATE_X;
+    private int mDepthLimit;    
+    
+    private final static ImageIcon ICON_STATE_O;
+    private final static ImageIcon ICON_STATE_X;
+    
+    static {        
+        ICON_STATE_O = new ImageIcon(new ImageIcon("circle.png")
+                .getImage().getScaledInstance(80, 80, Image.SCALE_DEFAULT));
+                
+        ICON_STATE_X = new ImageIcon(new ImageIcon("cross.png")
+                .getImage().getScaledInstance(80, 80, Image.SCALE_DEFAULT));        
+    }
     
     public GameController(final GameFrame gameFrame) {
         mMoveListener = new ActionListener() {
@@ -51,27 +55,19 @@ public class GameController {
                 
                 button.setEnabled(false);
                 button.setIcon(ICON_STATE_O);
-                
-                mTurn = TURN_STATE_X;
-                
-                if (hasWinner(PLAY_STATE_X)) {
-                    mGameFrame.notifyLoss();
-                } else if (hasWinner(PLAY_STATE_O)) {
-                    mGameFrame.notifyWin();
-                } else if (isFinished()) {
-                    mGameFrame.notifyDraw();
-                } else {                
+                                                
+                if (hasWinner(PLAY_STATE_X)) {                    
+                    mGameFrame.notifyLoss();                   
+                } else if (hasWinner(PLAY_STATE_O)) {                    
+                    mGameFrame.notifyWin();                    
+                } else if (isFinished()) {                    
+                    mGameFrame.notifyDraw();                    
+                } else {                            
                     play();
                 }
             }
         };
-        
-        mMoveButtons = gameFrame.getButtons();
-                
-        for (JToggleButton button: mMoveButtons) {
-            button.addActionListener(mMoveListener);
-        }                
-                        
+                                            
         mLevelListener = new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -79,54 +75,40 @@ public class GameController {
             }
         };
         
-        mRestartListener = new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                restart();
-            }
-        };
-        
         gameFrame.setLevelListener(mLevelListener);
-        gameFrame.setRestartListener(mRestartListener);
         
-        ICON_STATE_O = new ImageIcon("circle.png");
-        ICON_STATE_O = new ImageIcon(
-                ICON_STATE_O.getImage().getScaledInstance(80, 80, Image.SCALE_DEFAULT));
+        mMoveButtons = gameFrame.getButtons();
+                
+        for (JToggleButton button: mMoveButtons) {
+            button.addActionListener(mMoveListener);
+        }   
         
-        ICON_STATE_X = new ImageIcon("cross.png");        
-        ICON_STATE_X = new ImageIcon(
-                ICON_STATE_X.getImage().getScaledInstance(80, 80, Image.SCALE_DEFAULT));
-        
-        mGameFrame = gameFrame;
-        
-        mChildrenScore = new ArrayList<Entry<Integer, Integer>>();
+        mGameFrame = gameFrame; 
+        mGameFrame.setGameController(this);
     }
     
-    private void restart() {
-        for (JToggleButton button: mMoveButtons) {
-            button.setEnabled(true);
-            button.setSelected(false);
-            button.setIcon(null);
-        }
-        
+    public void restart() {                
         for (int i=0; i<mPlays.length; i++) {
             mPlays[i] = PLAY_STATE_DEFAULT;
         }
-        
-        mTurn = TURN_STATE_O;               
     }
     
-    private void play() {                
+    private void play() {        
+        if (mLevel == LEVEL_STATE_EASY) {
+            mDepthLimit = (getEmptyPlays().size()/2) + 1;
+        } else if (mLevel == LEVEL_STATE_MEDIUM) {
+            mDepthLimit = (getEmptyPlays().size()*3/4) + 1;
+        } else if (mLevel == LEVEL_STATE_HARD) {
+            mDepthLimit = -1;
+        }
         
-        doAlphaBetaMinimax(Integer.MIN_VALUE, Integer.MAX_VALUE, 0, TURN_STATE_X);
+        int bestPlay = doAlphaBetaMinimax(
+                Integer.MIN_VALUE, Integer.MAX_VALUE, mDepthLimit, TURN_STATE_X)[1];                
         
-        int optimumPlay = getOptimumPlay();
+        mPlays[bestPlay] = PLAY_STATE_X;
         
-        mPlays[optimumPlay] = PLAY_STATE_X;
-        
-        mMoveButtons[optimumPlay].setEnabled(false);
-        mMoveButtons[optimumPlay].setSelected(true);
-        mMoveButtons[optimumPlay].setIcon(ICON_STATE_X);
+        printPlays();
+        updatePlays();               
         
         if (hasWinner(PLAY_STATE_X)) {
             mGameFrame.notifyLoss();
@@ -134,25 +116,137 @@ public class GameController {
             mGameFrame.notifyWin();
         } else if (isFinished()) {
             mGameFrame.notifyDraw();
-        }
-        
-        mTurn = TURN_STATE_O;
+        }                
     }    
     
-    private int getOptimumPlay() {
-        int MAX = -100000;
-        int optimum = -1;
-        
-        for (int i = 0; i < mChildrenScore.size(); ++i) {
-            if (MAX < mChildrenScore.get(i).getKey()) {
-                MAX = mChildrenScore.get(i).getKey();
-                optimum = i;
-            }
-        }
-        
-        return mChildrenScore.get(optimum).getValue();        
+    private void printPlays() {
+        for (int i = 0; i < 3; ++i) {                        
+            for (int j = 0; j < 3; ++j) {
+                System.out.print(mPlays[(i*3)+j] + "\t");                    
+            }             
+            System.out.println();
+        }   
+        System.out.println();
     }
     
+    private void updatePlays() {
+        for (int i=0; i<mPlays.length; i++) {
+            if (mPlays[i] == PLAY_STATE_DEFAULT) {
+                mMoveButtons[i].setSelected(false);
+                mMoveButtons[i].setIcon(null);
+                mMoveButtons[i].setEnabled(true);
+            } else if (mPlays[i] == PLAY_STATE_X) {
+                mMoveButtons[i].setSelected(true);
+                mMoveButtons[i].setIcon(GameController.ICON_STATE_X);
+                mMoveButtons[i].setEnabled(false);                
+            } else if (mPlays[i] == PLAY_STATE_O) {
+                mMoveButtons[i].setSelected(true);
+                mMoveButtons[i].setIcon(GameController.ICON_STATE_O);
+                mMoveButtons[i].setEnabled(false);
+            }
+        }
+    }
+    
+    private int[] doAlphaBetaMinimax(int alpha, int beta, int depth, int turn) {           
+        List<Integer> emptyPlays = getEmptyPlays();
+     
+        int score;
+        int bestPlay = -1;
+      
+        if (depth == 0 
+                || hasWinner(PLAY_STATE_X) 
+                || hasWinner(PLAY_STATE_O)
+                || isFinished()) {
+            return new int[] { evaluatePlays(), bestPlay};
+        } else {
+            for (Integer emptyPlay: emptyPlays) {
+                if (turn == TURN_STATE_X) {
+                    mPlays[emptyPlay] = PLAY_STATE_X;
+
+                    score = doAlphaBetaMinimax(alpha, beta, depth-1, TURN_STATE_O)[0];
+                    if (score > alpha) {
+                       alpha = score;
+                       bestPlay = emptyPlay;
+                    }
+                } else if (turn == TURN_STATE_O) {
+                    mPlays[emptyPlay] = PLAY_STATE_O;
+
+                    score = doAlphaBetaMinimax(alpha, beta, depth-1, TURN_STATE_X)[0]; 
+                    if (score < beta) {
+                        beta = score;
+                        bestPlay = emptyPlay;
+                    }
+                }  
+                
+                mPlays[emptyPlay] = PLAY_STATE_DEFAULT;
+                
+                if (alpha >= beta) {
+                    break;
+                }                                
+            }
+            
+            return new int[] {(turn == TURN_STATE_X) ? alpha : beta, bestPlay};
+        }        
+      
+//        if (beta <= alpha) {             
+//            if(turn == TURN_STATE_X) {
+//                return Integer.MAX_VALUE; 
+//            } else {
+//                return Integer.MIN_VALUE; 
+//            }
+//        }
+//        
+//        if (depth == mDepthLimit 
+//                || hasWinner(PLAY_STATE_X) 
+//                || hasWinner(PLAY_STATE_O)
+//                || isFinished()) {
+//            return evaluatePlays();
+//        }                                 
+//        
+//        List<Integer> emptyPlays = getEmptyPlays();
+//        
+//        if (emptyPlays.isEmpty()) {
+//            return 0;
+//        }
+//        
+//        if (depth == 0) {
+//            mChildrenScore.clear();
+//        } 
+//        
+//        int maxValue = Integer.MIN_VALUE;
+//        int minValue = Integer.MAX_VALUE;
+//                
+//        for (Integer emptyPlay : emptyPlays) {
+//            int score = 0;
+//            
+//            if (turn == TURN_STATE_X) {
+//                mPlays[emptyPlay] = PLAY_STATE_X;
+//                
+//                score = doAlphaBetaMinimax(alpha, beta, depth+1, TURN_STATE_O);
+//                maxValue = Math.max(maxValue, score);
+//                alpha = Math.max(score, alpha);
+//                
+//                if (depth == 0) {
+//                    mChildrenScore.add(new AbstractMap.SimpleEntry(score, emptyPlay));
+//                }
+//            } else if (turn == TURN_STATE_O) {
+//                mPlays[emptyPlay] = PLAY_STATE_O;
+//                
+//                score = doAlphaBetaMinimax(alpha, beta, depth+1, TURN_STATE_X); 
+//                minValue = Math.min(minValue, score);
+//                beta = Math.min(score, beta);
+//            }
+//            
+//            mPlays[emptyPlay] = PLAY_STATE_DEFAULT;
+//            
+//            if(score == Integer.MAX_VALUE || score == Integer.MIN_VALUE) {
+//                break;
+//            }
+//        }
+//        
+//        return turn == TURN_STATE_X ? maxValue : minValue;                
+    }    
+        
     private boolean isFinished() {
         for (int play: mPlays) {
             if (play == PLAY_STATE_DEFAULT) {
@@ -203,7 +297,7 @@ public class GameController {
         int X, O, score = 0;
         
         for (int i = 0; i < 3; ++i) {            
-            X = O = 0;                        
+            X = (O = 0);
             for (int j = 0; j < 3; ++j) {
                 if (mPlays[(i*3)+j] == PLAY_STATE_X) {
                     X++;
@@ -215,7 +309,7 @@ public class GameController {
         }
         
         for (int j = 0; j < 3; ++j) {
-            X = O = 0;
+            X = (O = 0);
             for (int i = 0; i < 3; ++i) {
                 if (mPlays[(i*3)+j] == PLAY_STATE_X) {
                     X++;
@@ -226,7 +320,7 @@ public class GameController {
             score += updateScore(X, O);
         }
 
-        X = O = 0;        
+        X = (O = 0);    
         for (int i = 0, j = 0; i < 3; ++i, ++j) {
             if (mPlays[(i*3)+j] == PLAY_STATE_X) {
                 X++;
@@ -266,58 +360,5 @@ public class GameController {
             change = 0;
         } 
         return change;
-    }
-    
-    private int doAlphaBetaMinimax(int alpha, int beta, int depth, int turn) {
-        
-        if (beta <= alpha) {             
-            if(turn == TURN_STATE_X) {
-                return Integer.MAX_VALUE; 
-            } else {
-                return Integer.MIN_VALUE; 
-            }
-        }
-        
-        if (depth == mDepthLimit) {
-            return evaluatePlays();
-        }                                 
-        
-        if (depth == 0) {
-            mChildrenScore.clear();
-        } 
-        
-        int maxValue = Integer.MIN_VALUE;
-        int minValue = Integer.MAX_VALUE;
-        
-        List<Integer> emptyPlays = getEmptyPlays();
-        for (Integer emptyPlay : emptyPlays) {
-            int score = 0;
-            
-            if (turn == TURN_STATE_X) {
-                mPlays[emptyPlay] = PLAY_STATE_X;
-                
-                score = doAlphaBetaMinimax(alpha, beta, depth+1, TURN_STATE_O);
-                maxValue = Math.max(maxValue, score);
-                alpha = Math.max(score, alpha);
-                
-                if (depth == 0) {
-                    mChildrenScore.add(new AbstractMap.SimpleEntry(score, emptyPlay));
-                }
-            } else if (turn == TURN_STATE_O) {
-                mPlays[emptyPlay] = PLAY_STATE_O;
-                
-                score = doAlphaBetaMinimax(alpha, beta, depth+1, TURN_STATE_X); 
-                minValue = Math.min(minValue, score);
-                beta = Math.min(score, beta);
-            }
-            
-            mPlays[emptyPlay] = PLAY_STATE_DEFAULT;
-            
-            if(score == Integer.MAX_VALUE || score == Integer.MIN_VALUE) {
-                break;
-            }
-        }
-        
-        return turn == TURN_STATE_X ? maxValue : minValue;                
-    }
+    }    
 }

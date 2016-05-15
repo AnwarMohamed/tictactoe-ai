@@ -9,6 +9,8 @@ import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JRadioButtonMenuItem;
 import javax.swing.JSeparator;
+import javax.swing.JToggleButton;
+import javax.swing.SwingUtilities;
 
 /**
  *
@@ -16,11 +18,11 @@ import javax.swing.JSeparator;
  */
 public class GameFrame extends javax.swing.JFrame {
        
-    JRadioButtonMenuItem easyAction;
-    JRadioButtonMenuItem mediumAction; 
-    JRadioButtonMenuItem hardAction;
+    private final JRadioButtonMenuItem easyAction;
+    private final JRadioButtonMenuItem mediumAction; 
+    private final JRadioButtonMenuItem hardAction;
     
-    JMenuItem restartAction;
+    private final JMenuItem restartAction;
     
     /**
      * Creates new form GameFrame
@@ -38,15 +40,14 @@ public class GameFrame extends javax.swing.JFrame {
         gameMenu.add(restartAction);
         gameMenu.add(new JSeparator());
         gameMenu.add(exitAction);
-
+        
         restartAction.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent action) {
-                easyAction.setEnabled(true);
-                mediumAction.setEnabled(true);
-                hardAction.setEnabled(true);
+                mGameController.restart();
+                restart();
             }
-        });
+        });        
         
         exitAction.addActionListener(new ActionListener() {
             @Override
@@ -79,7 +80,7 @@ public class GameFrame extends javax.swing.JFrame {
             public void actionPerformed(ActionEvent e) {
                 easyAction.setEnabled(false);
                 mediumAction.setEnabled(false);
-                hardAction.setEnabled(false);                
+                hardAction.setEnabled(false);              
             }
         };
         
@@ -224,6 +225,24 @@ public class GameFrame extends javax.swing.JFrame {
         });
     }
 
+    private GameController mGameController;
+    
+    public void setGameController(GameController controller) {        
+        mGameController = controller;
+    }
+    
+    public void restart() {
+        easyAction.setEnabled(true);
+        mediumAction.setEnabled(true);
+        hardAction.setEnabled(true);  
+                        
+        for (JToggleButton button: getButtons()) {
+            button.setEnabled(true);
+            button.setSelected(false);
+            button.setIcon(null);
+        }
+    }
+    
     public int getLevel() {
         if (easyAction.isSelected()) {
             return 0;
@@ -234,41 +253,55 @@ public class GameFrame extends javax.swing.JFrame {
         }
     }
     
-    public void setRestartListener(ActionListener listener) {
-        restartAction.addActionListener(listener);
-    }
-    
     public void setLevelListener(ActionListener listener) {
         easyAction.addActionListener(listener);
         mediumAction.addActionListener(listener);
         hardAction.addActionListener(listener);
     }
     
-    public void notifyWin() {
-        JOptionPane.showMessageDialog(this,
-            "Congratulations, You Won!",
-            "You Won",
-            JOptionPane.INFORMATION_MESSAGE);
-        
-        restartAction.doClick();
+    public void notifyWin() {                
+        SwingUtilities.invokeLater(new Runnable() {                 
+            @Override
+            public void run() {          
+                JOptionPane.showMessageDialog(GameFrame.this,
+                    "Congratulations, You Won!",
+                    "You Won",
+                    JOptionPane.INFORMATION_MESSAGE);  
+                
+                mGameController.restart();
+                restart();                
+            }
+        });
     }
 
-    public void notifyLoss() {
-        JOptionPane.showMessageDialog(this,
-            "Unfortunately, You Lost!",
-            "You Lost",
-            JOptionPane.INFORMATION_MESSAGE);
-        
-        restartAction.doClick();
+    public void notifyLoss() {               
+        SwingUtilities.invokeLater(new Runnable() {                 
+            @Override
+            public void run() {          
+                JOptionPane.showMessageDialog(GameFrame.this,
+                    "Unfortunately, You Lost!",
+                    "You Lost",
+                    JOptionPane.INFORMATION_MESSAGE);  
+                
+                mGameController.restart();
+                restart();
+            }
+        });
     }
     
-    public void notifyDraw() {
-        JOptionPane.showMessageDialog(this,
-            "Lol, It's a Draw!",
-            "It's a Draw",
-            JOptionPane.INFORMATION_MESSAGE);
-        
-        restartAction.doClick();        
+    public void notifyDraw() {          
+        SwingUtilities.invokeLater(new Runnable() {                 
+            @Override
+            public void run() {          
+                JOptionPane.showMessageDialog(GameFrame.this,
+                    "Lol, It's a Draw!",
+                    "It's a Draw",
+                    JOptionPane.INFORMATION_MESSAGE); 
+                
+                mGameController.restart();
+                restart();                
+            }
+        });
     }
     
     public javax.swing.JToggleButton[] getButtons() {
